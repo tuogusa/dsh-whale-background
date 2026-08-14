@@ -1,0 +1,25 @@
+{
+  "name": "dsh-whale-background",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness Web 背景插件：深海鲸鱼娘壁纸 + 半透明应用表面（client-only）",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib",
+    "assets"
+  ],
+  "scripts": {
+    "build": "node build.js"
+  },
+  "license": "MIT"
+}
