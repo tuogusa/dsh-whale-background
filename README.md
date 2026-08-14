@@ -10,8 +10,12 @@ DeepSeek Harness Web 背景插件（client-only）：深海鲸鱼娘壁纸 + 半
 ## 安装
 
 ```bash
-dsh plugin --profile web add github:<your-name>/dsh-whale-background
+dsh plugin --profile web add github:tuogusa/dsh-whale-background
 ```
+
+**兼容 Profile**：`web`（DSH Web GUI）。
+
+
 
 然后按 `dsh` 引导添加 `pnpm-workspace.yaml` 的 allowBuilds 条目（git 依赖的 prepare 脚本需要放行），重启 DSH 并 `Ctrl+Shift+R` 刷新浏览器。
 
