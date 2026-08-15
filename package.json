@@ -12,11 +12,15 @@
   "dsh": {
     "client": {
       "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "files": [
     "lib",
-    "assets"
+    "assets",
+    "cordis.patch.yml"
   ],
   "scripts": {
     "build": "node build.js"

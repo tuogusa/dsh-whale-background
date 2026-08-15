@@ -1,0 +1,4 @@
+# dsh-whale-background bundle patch：dsh plugin add 安装后自动挂载此 loader 行。
+- insert:
+    - id: whale-background
+      name: 'dsh-whale-background'
