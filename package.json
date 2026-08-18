@@ -1,7 +1,7 @@
 {
   "name": "dsh-whale-background",
-  "version": "0.2.0",
-  "description": "DeepSeek Harness Web 背景插件：深海鲸鱼娘壁纸 + 半透明应用表面（client-only）",
+  "version": "0.3.0",
+  "description": "DeepSeek Harness Web 背景插件：深海鲸鱼娘壁纸 + 半透明应用表面；支持在设置页换图、调透明度、铺放方式（client-only）",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -11,6 +11,13 @@
   },
   "dsh": {
     "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
       "platform": "web"
     },
     "bundle": {
