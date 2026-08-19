@@ -34,6 +34,18 @@ dsh plugin --profile web add link:E:/dsh_workspace/dsh-whale-background
 
 安装后重启 DSH 并 `Ctrl+Shift+R` 刷新浏览器。
 
+## 更新
+
+```bash
+# 方式一：CLI 更新（推荐）
+dsh plugin --profile web update dsh-whale-background
+
+# 方式二：重新从 GitHub 源安装/更新
+dsh plugin --profile web add github:tuogusa/dsh-whale-background
+```
+
+> 说明：`dsh plugin` 是 pnpm 的前置转发器，`update` 会按当前依赖声明重新解析该包；通过 `github:tuogusa/dsh-whale-background` 安装时，会更新到仓库默认分支的最新提交。
+
 ## 换内置壁纸（默认图）
 
 把任意图片（JPG/PNG/WebP/GIF，`build.js` 自动识别格式）覆盖到 `assets/wallpaper.jpg`，然后：
