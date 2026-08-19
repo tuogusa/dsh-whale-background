@@ -19,6 +19,7 @@ window.__ModuleLoader__.load({
 
 		var WALLPAPER = "data:__WALLPAPER_MIME__;base64,__WALLPAPER_BASE64__";
 		var STYLE_TAG_ID = "dsh-whale-background/wallpaper.css";
+		var REFERRER_TAG_ID = "dsh-whale-background/referrer";
 		var STORAGE_KEY = "dsh-whale-background";
 		var NS = "settings.whaleBackground";
 		var DEFAULTS = { image: "", surfaceOpacity: 0.6, mode: "contain" };
@@ -40,7 +41,9 @@ window.__ModuleLoader__.load({
 			resetDone: "已恢复默认",
 			saved: "已应用",
 			imageTooLarge: "图片过大，无法保存到本地（浏览器限制约 5MB）。请换一张较小的图片或改用 URL。",
-			invalidUrl: "URL 无效，请检查后重试。"
+			invalidUrl: "URL 无效，请检查后重试。",
+			urlChecking: "正在检查图片 URL…",
+			urlFailed: "图片加载失败：可能不是图片直链、已被防盗链，或链接已失效。"
 		};
 		var en = {
 			nav: "Background",
@@ -58,7 +61,9 @@ window.__ModuleLoader__.load({
 			resetDone: "Reset to default",
 			saved: "Applied",
 			imageTooLarge: "Image is too large to store locally (browser limit is about 5MB). Use a smaller image or a URL instead.",
-			invalidUrl: "Invalid URL. Please check and try again."
+			invalidUrl: "Invalid URL. Please check and try again.",
+			urlChecking: "Checking image URL…",
+			urlFailed: "Image failed to load: it may not be a direct image link, may be hotlink-protected, or the link may have expired."
 		};
 
 		// ---------- 工具 ----------
@@ -68,6 +73,26 @@ window.__ModuleLoader__.load({
 
 		function cssUrl(value) {
 			return String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+		}
+
+		// 远程图片经常会做 Referer 防盗链；动态加一个仅由本插件管理的
+		// <meta name="referrer" content="no-referrer">，让 CSS 背景图请求不携带来源。
+		function setReferrerMeta(active) {
+			if (typeof document === "undefined") return;
+			var selector = "meta[data-plugin-css=" + JSON.stringify(REFERRER_TAG_ID) + "]";
+			var meta = document.querySelector(selector);
+			if (active) {
+				if (meta === null) {
+					meta = document.createElement("meta");
+					meta.name = "referrer";
+					meta.content = "no-referrer";
+					meta.dataset.plugin = "dsh-whale-background";
+					meta.dataset.pluginCss = REFERRER_TAG_ID;
+					document.head.appendChild(meta);
+				}
+			} else if (meta !== null) {
+				meta.remove();
+			}
 		}
 
 		// ---------- 设置读写 ----------
@@ -106,6 +131,8 @@ window.__ModuleLoader__.load({
 		function applySettings(settings) {
 			if (typeof document === "undefined") return;
 			var image = settings.image && settings.image !== "" ? settings.image : WALLPAPER;
+			var isRemote = /^https?:\/\//i.test(image);
+			setReferrerMeta(isRemote);
 			var opacity = settings.surfaceOpacity;
 			var mode = settings.mode;
 			var lightBg = "rgba(255,255,255," + opacity + ")";
@@ -159,6 +186,15 @@ window.__ModuleLoader__.load({
 			var urlState = react.useState("");
 			var url = urlState[0];
 			var setUrl = urlState[1];
+			var checkingState = react.useState(false);
+			var checking = checkingState[0];
+			var setChecking = checkingState[1];
+			var urlSeqRef = react.useRef(0);
+
+			function invalidateUrlCheck() {
+				urlSeqRef.current += 1;
+				setChecking(false);
+			}
 
 			function commit(next) {
 				try {
@@ -172,6 +208,7 @@ window.__ModuleLoader__.load({
 			}
 
 			function onFile(event) {
+				invalidateUrlCheck();
 				var file = event.currentTarget.files && event.currentTarget.files[0];
 				if (!file) return;
 				var reader = new FileReader();
@@ -190,11 +227,30 @@ window.__ModuleLoader__.load({
 					setNotice(t("invalidUrl"));
 					return;
 				}
-				commit(Object.assign({}, settings, { image: value }));
-				setUrl("");
+				if (checking) return;
+
+				var seq = ++urlSeqRef.current;
+				setChecking(true);
+				setNotice(t("urlChecking"));
+
+				var img = new Image();
+				img.referrerPolicy = "no-referrer";
+				img.onload = function () {
+					if (seq !== urlSeqRef.current) return;
+					setChecking(false);
+					commit(Object.assign({}, settings, { image: value }));
+					setUrl("");
+				};
+				img.onerror = function () {
+					if (seq !== urlSeqRef.current) return;
+					setChecking(false);
+					setNotice(t("urlFailed"));
+				};
+				img.src = value;
 			}
 
 			function onClear() {
+				invalidateUrlCheck();
 				commit(Object.assign({}, settings, { image: "" }));
 			}
 
@@ -207,6 +263,7 @@ window.__ModuleLoader__.load({
 			}
 
 			function onReset() {
+				invalidateUrlCheck();
 				var next = resetSettings();
 				setSettings(next);
 				setUrl("");
@@ -253,7 +310,7 @@ window.__ModuleLoader__.load({
 						onKeyDown: function (e) { if (e.key === "Enter") onUrlApply(); },
 						style: Object.assign({}, inputStyle, { flex: "auto" })
 					}),
-					h("button", { type: "button", onClick: onUrlApply, style: buttonStyle }, t("applyUrl"))
+					h("button", { type: "button", onClick: onUrlApply, disabled: checking, style: buttonStyle }, t("applyUrl"))
 				),
 				h("div", { style: { display: "flex", alignItems: "center", gap: "10px" } },
 					h("span", { style: { fontSize: "13px", color: "var(--dsw-alias-label-secondary)", flex: "none" } }, t("opacity") + " " + Math.round(settings.surfaceOpacity * 100) + "%"),
